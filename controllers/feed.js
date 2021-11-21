@@ -3,14 +3,31 @@ const PostModel = require("../models/post")
 const fs = require('fs');
 const path = require("path")
 exports.getPosts = (req, res, next) => {
-  PostModel.find().then((posts) => {
-    res.status(200).json({ message: "Fetched post successfully", posts: posts })
-  }).catch((err) => {
-    if (!err.statusCode) {
-      err.statusCode = 500
-    }
-    next(err);
-  })
+  const currentPage = req.query.page || 1;
+  const perPage = 2;
+  let totalItems;
+  PostModel.find().countDocuments()
+    .then((count) => {
+      totalItems = count;
+      return PostModel.find()
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+    })
+
+    .then((posts) => {
+      res.status(200).json(
+        {
+          message: "Fetched post successfully",
+          posts: posts,
+          totalItems: totalItems
+        }
+      )
+    }).catch((err) => {
+      if (!err.statusCode) {
+        err.statusCode = 500
+      }
+      next(err);
+    })
 
 };
 
